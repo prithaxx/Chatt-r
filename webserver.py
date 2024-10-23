@@ -10,4 +10,6 @@ def start_server():
         s.listen()
         while True:
             conn, addr = s.accept()
-            
+            thread = threading.thread(target=handle_client, args=(conn))
+            thread.run()
+
