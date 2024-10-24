@@ -16,6 +16,9 @@ clients = []
 usernames = {}
 chat_history = []
 
+def get_chat_history():
+    return json.dumps(chat_history[-MAX_HISTORY:])
+
 def load_chat_history():
     if os.path.exists(CHAT_HISTORY):
         with open(CHAT_HISTORY, 'r') as f:
@@ -57,8 +60,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         data = client.recv(1024)
                         if data:
                             message = data.strip().decode()
+
+                            if message == 'get_history':
+                                client.sendall(get_chat_history().encode())
                             
-                            if(message.lower() != 'quit'):
+                            elif(message.lower() != 'quit'):
                                 timestamp = str(time.time())
                                 
                                 # If this is a new username -> add it to list, else just append username before their message
