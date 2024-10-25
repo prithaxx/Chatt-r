@@ -16,18 +16,15 @@ usernames = {}
 chat_history = []
 
 
-def get_chat_history():
-    return json.dumps(chat_history[-MAX_HISTORY:])
-
-
 def load_chat_history():
     if os.path.exists(CHAT_HISTORY):
         with open(CHAT_HISTORY, 'r') as f:
             try:
                 history = json.load(f)
+                return history[-MAX_HISTORY:]
             except json.JSONDecodeError:
                 print('Error')
-        return history[-MAX_HISTORY:]
+                return []
     return []
 
 def add_message_to_history(u, mess):
@@ -36,6 +33,8 @@ def add_message_to_history(u, mess):
     with open(CHAT_HISTORY, 'w') as f:
         json.dump(chat_history, f, indent=1)
 
+def get_chat_history():
+    return json.dumps(chat_history[-MAX_HISTORY:])
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -54,7 +53,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     conn, addr = s.accept()
                     print('Connected by ', addr)
                     clients.append(conn)
-
                     conn.sendall(b'Welcome! Please provide your username to start chatting:\n')
 
                 else:
@@ -80,6 +78,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                                         client.sendall(formatted_message.encode())
 
                                 else:
+                                    print('hello i am here')
                                     user = usernames[client]
                                     formatted_message = '(' + timestamp + ') ' + user + ': ' + message
                                     for c in clients:

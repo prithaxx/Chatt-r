@@ -29,7 +29,6 @@ function setupChatInterface() {
     var sendBtn = document.createElement('button');
     sendBtn.textContent = 'Send';
     sendBtn.onclick = sendMessage;
-
     chatDiv.appendChild(messageInput);
     chatDiv.appendChild(sendBtn);
 
@@ -40,37 +39,35 @@ function setupChatInterface() {
 
 function sendMessage() {
     var message = document.getElementById('message').value;
-    if (!message) {
+    if (!message)
         alert("Message cannot be empty.");
-        return;
+    else {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/messages", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var messagesDiv = document.getElementById('messages');
+                var newMessage = username + ": " + message;
+                var messageElement = document.createElement('div');
+                messageElement.textContent = newMessage;
+                messagesDiv.appendChild(messageElement);
+
+                document.getElementById('message').value = '';
+            }
+        };
+        xhr.send(JSON.stringify({ user: username, message: message }));
     }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/messages", true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            var messagesDiv = document.getElementById('messages');
-            var newMessage = username + ": " + message;
-            var messageElement = document.createElement('div');
-            messageElement.textContent = newMessage;
-            messagesDiv.appendChild(messageElement);
-
-            // Clear the input field after sending the message
-            document.getElementById('message').value = '';
-        }
-    };
-    xhr.send(JSON.stringify({ user: username, message: message }));
 }
 
 function fetchMessages() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "/api/messages", true);
     xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
+        if (xhr.readyState === 4 && xhr.status === 200) {
             var messages = JSON.parse(xhr.responseText);
             var messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = ''; // Clear the div
+            messagesDiv.innerHTML = '';
             messages.forEach(function (msg) {
                 messagesDiv.innerHTML += msg.user + ': ' + msg.message + '<br>';
             });
