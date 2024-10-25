@@ -1,35 +1,67 @@
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOM fully loaded and parsed"); // Check if this logs
-    document.getElementById("sendbtn").addEventListener("click", function() {
-        console.log("Button clicked"); // Check if this logs when button is clicked
-        sendMessage();
-    });
-});
+var username;
+
+function login(){
+    username = document.getElementById("username").value;
+    if (!username)
+        alert("Username is required to login")
+    else{
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/login", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.withCredentials = true;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200)
+                setupChatInterface();
+        }
+        xhr.send(JSON.stringify({ user: username }));
+    }
+}
+
+function setupChatInterface() {
+    var chatDiv = document.getElementById('chat');
+    chatDiv.innerHTML = '';
+
+    var messageInput = document.createElement('input');
+    messageInput.type = 'text';
+    messageInput.id = 'message';
+    messageInput.placeholder = 'Enter your message';
+
+    var sendBtn = document.createElement('button');
+    sendBtn.textContent = 'Send';
+    sendBtn.onclick = sendMessage;
+
+    chatDiv.appendChild(messageInput);
+    chatDiv.appendChild(sendBtn);
+
+    var messagesDiv = document.createElement('div');
+    messagesDiv.id = 'messages';
+    chatDiv.appendChild(messagesDiv);
+}
 
 function sendMessage() {
     var message = document.getElementById('message').value;
-    var user = "web_user"; // Replace this with the username logic
-    console.log("Sending message: ", message); // Debugging log
     if (!message) {
-        console.log("Message cannot be empty."); // Log for empty messages
+        alert("Message cannot be empty.");
         return;
     }
+
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/messages", true);
     xhr.setRequestHeader("Content-Type", "application/json");
     xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-                console.log("Message sent successfully");
-                document.getElementById('message').value = ''; // Clear the input field
-            } else {
-                console.log("Error sending message: ", xhr.status, xhr.statusText); // Log error status
-            }
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var messagesDiv = document.getElementById('messages');
+            var newMessage = username + ": " + message;
+            var messageElement = document.createElement('div');
+            messageElement.textContent = newMessage;
+            messagesDiv.appendChild(messageElement);
+
+            // Clear the input field after sending the message
+            document.getElementById('message').value = '';
         }
     };
-    xhr.send(JSON.stringify({ user: user, message: message }));
+    xhr.send(JSON.stringify({ user: username, message: message }));
 }
-
 
 function fetchMessages() {
     var xhr = new XMLHttpRequest();
@@ -47,6 +79,5 @@ function fetchMessages() {
     xhr.send();
 }
 
-// Poll for new messages every 5 seconds
-setInterval(fetchMessages, 5000);
+setInterval(fetchMessages, 3000);
 
