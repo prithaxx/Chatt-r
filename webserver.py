@@ -6,7 +6,7 @@ import uuid
 HOST = ''
 PORT = 8211
 SERVER_HOST = ''
-SERVER_PORT = 8212
+SERVER_PORT = 8210
 
 def connect_server(message):
     try:
@@ -41,36 +41,14 @@ def serve_static_file(conn, request):
 
 sessions = {}
 def handle_api(csock, request):
-    if request.startswith('GET /api/messages'):
-        response = connect_server('get_history')
-        if response:
-            headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
-            csock.send(headers.encode() + response.encode())
-        else:
-            csock.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
-
-    elif request.startswith('POST /api/messages'):
+    # Request - Login
+    if request.startswith('POST /api/login'):
         headers, body = request.split('\r\n\r\n', 1)
         try:
-            new_message = json.loads(body)
-            user = new_message.get('user')
-            message = new_message.get('message')
-            if user and message:
-                chat_request = f"{user}: {message}"
-                response = connect_server(chat_request)
-                csock.send(b'HTTP/1.1 200 OK\r\n\r\n')
-            else:
-                csock.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
-        except json.JSONDecodeError:
-            csock.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
-
-    elif request.startswith('POST /api/login'):
-        headers, body = request.split('\r\n\r\n', 1)
-        try:
-            login_data = json.loads(body)
-            username = login_data.get('user')
+            data = json.loads(body)
+            username = data.get('user')
             if username:
-                session_id = str(uuid.uuid4())
+                session_id = username
                 headers = 'HTTP/1.1 200 OK\r\nSet-Cookie: session_id={}; HttpOnly\r\n\r\n'.format(session_id)
                 csock.send(headers.encode())
             else:
@@ -78,6 +56,35 @@ def handle_api(csock, request):
         except json.JSONDecodeError:
             csock.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
+    # Request - Send a message
+    elif request.startswith('POST /api/messages'):
+        headers, body = request.split('\r\n\r\n', 1)
+        try:
+            data = json.loads(body)
+            user = data.get('user')
+            message = data.get('message')
+            if user and message:
+                chat_request = f"{user}: {message}"
+                response = connect_server(chat_request)
+                if response:
+                    csock.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                else:
+                    csock.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
+            else:
+                csock.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+        except json.JSONDecodeError:
+            csock.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+
+    # Request - Get a list of messages
+    elif request.startswith('GET /api/messages'):
+        response = connect_server('get_history')
+        if response:
+            headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
+            csock.send(headers.encode() + response.encode())
+        else:
+            csock.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
+
+    # Request - Invalid
     else:
         csock.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
