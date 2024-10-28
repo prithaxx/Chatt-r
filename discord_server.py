@@ -8,118 +8,159 @@ import time
 
 HOST = ''
 PORT = 8210
-CHAT_HISTORY_FILE = 'chat_history.json'
+WEB_SERVER_PORT = 8212
+CHAT_HISTORY = 'chat_history.json'
 MAX_HISTORY = 50
 
-clients = []
-usernames = {}  # Maps each client connection to their username
-chat_history = []  # Stores the chat history
+server_clients = []
+web_clients = []
+usernames = {}
+chat_history = []
 
-
-# Load chat history from file if it exists
 def load_chat_history():
-    if os.path.exists(CHAT_HISTORY_FILE):
-        with open(CHAT_HISTORY_FILE, 'r') as f:
+    if os.path.exists(CHAT_HISTORY):
+        with open(CHAT_HISTORY, 'r') as f:
             try:
                 history = json.load(f)
-                return history[-MAX_HISTORY:]  # Load the most recent messages
             except json.JSONDecodeError:
-                print('Error decoding chat history.')
+                print('Error in loading chat history')
                 return []
+        return history[-MAX_HISTORY:]
     return []
 
-
-# Save a new message to the chat history and write it to file
-def add_message_to_history(username, message):
+def add_message_to_history(user, message):
     timestamp = str(time.time())
-    chat_message = {'user': username, 'timestamp': timestamp, 'message': message}
+    chat_message = {'user': user, 'timestamp': timestamp, 'message': message}
     chat_history.append(chat_message)
+    with open(CHAT_HISTORY, 'w') as f:
+        json.dump(chat_history, f, indent=1)
 
-    # Write updated chat history to file
-    with open(CHAT_HISTORY_FILE, 'w') as f:
-        json.dump(chat_history[-MAX_HISTORY:], f, indent=1)
-
-
-# Return the last MAX_HISTORY messages as a JSON string
 def get_chat_history():
     return json.dumps(chat_history[-MAX_HISTORY:])
 
+def broadcast_message(client_list, message):
+    for c in client_list:
+        try:
+            c.sendall(message.encode())
+        except Exception as e:
+            print("Failed to send message:", e)
+            client_list.remove(c)
+            c.close()
 
-# Load chat history at startup to initialize chat history
-chat_history = load_chat_history()
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind((HOST, PORT))
     server_socket.listen()
 
-    print('Chat server started, waiting for connections...')
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as web_socket:
+        web_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        web_socket.bind((HOST, WEB_SERVER_PORT))
+        web_socket.listen()
 
-    while True:
-        try:
-            # Prepare the list of sockets to monitor
-            inputs = [server_socket] + clients
-            readable, _, exceptional = select.select(inputs, [], inputs)
+        print('Chat server started, waiting for connections...')
 
-            for client in readable:
-                # New client connection
-                if client is server_socket:
-                    conn, addr = server_socket.accept()
-                    print('New connection from', addr)
-                    clients.append(conn)
-                    conn.sendall(b'Welcome! Please provide your username to start chatting:\n')
+        while True:
+            try:
+                server_clients = [c for c in server_clients if c.fileno() != -1]
+                web_clients = [c for c in web_clients if c.fileno() != -1]
+                inputs = [server_socket, web_socket] + server_clients + web_clients
+                readable, writable, exceptional = select.select(inputs, [], inputs)
 
-                # Existing client message
-                else:
-                    try:
-                        data = client.recv(1024)
-                        if data:
-                            message = data.decode().strip()
+                for client in readable:
+                    if client is server_socket:
+                        conn, addr = server_socket.accept()
+                        print('Terminal client connected by', addr)
+                        server_clients.append(conn)
+                        conn.sendall(b'Welcome! Please provide your username to start chatting:\n')
 
-                            # Check for message in format "user: message"
-                            if ':' in message:
-                                parts = message.split(':', 1)
-                                username = parts[0].strip()
-                                user_message = parts[1].strip()
+                    elif client is web_socket:
+                        conn, addr = web_socket.accept()
+                        print('Web server connected by', addr)
+                        web_clients.append(conn)
 
-                                usernames[client] = username
+                    else:
+                        try:
+                            data = client.recv(1024)
+                            if data:
+                                message = data.strip().decode()
 
-                                # Broadcast message to all clients
-                                timestamp = str(time.time())
-                                formatted_message = f'({timestamp}) {username}: {user_message}'
-                                for c in clients:
-                                    if c in usernames:
-                                        c.sendall((formatted_message + '\n').encode())
+                                # Handle messages from web clients
+                                if client in web_clients:
+                                    if ':' in message:
+                                        parts = message.split(':', 1)
+                                        user = parts[0].strip()
+                                        user_message = parts[1].strip()
 
-                                # Save the message to chat history
-                                add_message_to_history(username, user_message)
-                                client.sendall(b'HTTP/1.1 200 OK\r\n\r\n')  # Send response to webserver
+                                        timestamp = str(time.time())
+                                        formatted_message = f'({timestamp}) {user}: {user_message}'
+                                        add_message_to_history(user, user_message)
 
-                            elif message == 'get_history':
-                                client.sendall(get_chat_history().encode())
+                                        # Broadcast to all clients
+                                        broadcast_message(web_clients, formatted_message)
+                                        broadcast_message(server_clients, formatted_message)
 
-                            elif message.lower() == 'quit':
-                                print(f"{usernames.get(client, 'Unknown user')} has quit.")
-                                clients.remove(client)
+                                        client.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+
+                                    # elif message == 'get_history':
+                                    #     chat_history = get_chat_history()
+                                    #     client.sendall(chat_history.encode())
+
+
+                                else:
+                                    # Handle messages from terminal clients
+                                    if message.lower() != 'quit':
+                                        timestamp = str(time.time())
+
+                                        if client not in usernames:
+                                            usernames[client] = message
+                                            client.sendall(b'You can start chatting now:\n')
+
+                                            # Send chat history to new terminal client
+                                            chat_history = load_chat_history()
+                                            for chat in chat_history:
+                                                formatted_message = f"({chat['timestamp']}) {chat['user']}: {chat['message']}\n"
+                                                client.sendall(formatted_message.encode())
+
+                                        else:
+                                            user = usernames[client]
+                                            formatted_message = f'({timestamp}) {user}: {message}'
+                                            broadcast_message(server_clients, formatted_message + '\n')
+                                            add_message_to_history(user, message)
+
+                                    else:
+                                        # Handle client quit
+                                        if client in usernames:
+                                            print(usernames[client], 'has quit the server.\n')
+                                            del usernames[client]
+                                        elif client in web_clients:
+                                            print('A web client has disconnected.\n')
+                                            web_clients.remove(client)
+                                        server_clients.remove(client)
+                                        client.close()
+
+                            else:
+                                # Handle disconnections
+                                if client in usernames:
+                                    print(usernames[client], 'has disconnected.\n')
+                                    del usernames[client]
+                                    server_clients.remove(client)
+                                elif client in web_clients:
+                                    print('A web client has disconnected.\n')
+                                    web_clients.remove(client)
                                 client.close()
 
-                        else:
-                            # Handle disconnection
-                            if client in usernames:
-                                print(f"{usernames[client]} has disconnected.")
-                            clients.remove(client)
+                        except Exception as e:
+                            print('Error:', e)
+                            if client in server_clients:
+                                server_clients.remove(client)
+                            elif client in web_clients:
+                                web_clients.remove(client)
                             client.close()
 
-                    except Exception as e:
-                        print('Error processing client message:', e)
-                        traceback.print_exc()
-                        if client in clients:
-                            clients.remove(client)
-                        client.close()
-
-        except KeyboardInterrupt:
-            print('Server is shutting down.')
-            sys.exit(0)
-        except Exception as e:
-            print('Unexpected server error:', e)
-            traceback.print_exc()
+            except KeyboardInterrupt:
+                print('Server is shutting down.')
+                sys.exit(0)
+            except Exception as e:
+                print('Something went wrong:')
+                traceback.print_exc()
