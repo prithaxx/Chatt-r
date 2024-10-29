@@ -35,8 +35,6 @@ def add_message_to_history(user, message):
     with open(CHAT_HISTORY, 'w') as f:
         json.dump(chat_history, f, indent=1)
 
-def get_chat_history():
-    return json.dumps(chat_history[-MAX_HISTORY:])
 
 def broadcast_message(client_list, message):
     for c in client_list:
@@ -62,8 +60,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
         while True:
             try:
-                server_clients = [c for c in server_clients if c.fileno() != -1]
-                web_clients = [c for c in web_clients if c.fileno() != -1]
                 inputs = [server_socket, web_socket] + server_clients + web_clients
                 readable, writable, exceptional = select.select(inputs, [], inputs)
 
@@ -97,14 +93,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                         add_message_to_history(user, user_message)
 
                                         # Broadcast to all clients
-                                        broadcast_message(web_clients, formatted_message)
                                         broadcast_message(server_clients, formatted_message)
 
                                         client.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
 
-                                    # elif message == 'get_history':
-                                    #     chat_history = get_chat_history()
-                                    #     client.sendall(chat_history.encode())
+                                    elif message == 'get_history':
+                                        chat_history = load_chat_history()
+                                        client.sendall(json.dumps(chat_history).encode())
 
 
                                 else:

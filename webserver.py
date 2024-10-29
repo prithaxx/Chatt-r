@@ -55,14 +55,6 @@ def handle_api(conn, request):
         except json.JSONDecodeError:
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
-
-
-    # elif request.startswith('DELETE /api/login'):
-    #     conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
-
-
-
-
     elif request.startswith('POST /api/messages'):
         headers, body = request.split('\r\n\r\n', 1)
         try:
@@ -80,16 +72,14 @@ def handle_api(conn, request):
         except json.JSONDecodeError:
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
-
-
-    # elif request.startswith('GET /api/messages'):
-    #     response = connect_server('get_history')
-    #     if response:
-    #         headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
-    #         conn.send(headers.encode() + response.encode())
-    #     else:
-    #         conn.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
-
+    elif request.startswith('GET /api/messages'):
+        # ?
+        response = connect_server('get_history')
+        if response:
+            headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
+            conn.send(headers.encode() + response.encode())
+        else:
+            conn.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
 
     else:
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
@@ -107,6 +97,7 @@ def handle_client(conn):
 
 # Main server loop
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((HOST, PORT))
     s.listen()
     print('Web server running on port 8211')
