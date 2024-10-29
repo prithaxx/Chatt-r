@@ -17,6 +17,7 @@ web_clients = []
 usernames = {}
 chat_history = []
 
+
 def load_chat_history():
     if os.path.exists(CHAT_HISTORY):
         with open(CHAT_HISTORY, 'r') as f:
@@ -27,6 +28,7 @@ def load_chat_history():
                 return []
         return history[-MAX_HISTORY:]
     return []
+
 
 def add_message_to_history(user, message):
     timestamp = str(time.time())
@@ -94,13 +96,19 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
                                         # Broadcast to all clients
                                         broadcast_message(server_clients, formatted_message)
-
                                         client.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
 
                                     elif message == 'get_history':
                                         chat_history = load_chat_history()
                                         client.sendall(json.dumps(chat_history).encode())
 
+                                    elif message == 'quit':
+                                        client.sendall(b'HTTP/1.1 200 OK\r\n'
+                                                       b'Set-Cookie: session=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; '
+                                                       b'HttpOnly\r\n'
+                                                       b'\r\n')
+                                        web_clients.remove(client)
+                                        client.close()
 
                                 else:
                                     # Handle messages from terminal clients

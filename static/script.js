@@ -1,5 +1,7 @@
 var username;
 var last_message_timestamp = 0;
+var pollInterval;
+
 function login(){
     username = document.getElementById("username").value;
     if (!username)
@@ -34,6 +36,7 @@ function setupChatInterface() {
 
     var logoutBtn = document.createElement('button')
     logoutBtn.textContent = 'Logout';
+    logoutBtn.onclick = logout;
     chatDiv.appendChild(logoutBtn);
 
     var messagesDiv = document.createElement('div');
@@ -43,6 +46,21 @@ function setupChatInterface() {
     poll();
 }
 
+function createLoginInterface(){
+     var chatDiv = document.getElementById('chat');
+    chatDiv.innerHTML = '';
+
+    var usernameInput = document.createElement('input');
+    usernameInput.type = 'text';
+    usernameInput.id = 'username';
+    usernameInput.placeholder = 'Enter your username';
+    chatDiv.appendChild(usernameInput);
+
+    var loginBtn = document.createElement('button');
+    loginBtn.textContent = 'Login';
+    loginBtn.onclick = login;
+    chatDiv.appendChild(loginBtn);
+}
 
 function sendMessage() {
     var message = document.getElementById('message').value;
@@ -69,7 +87,7 @@ function sendMessage() {
 }
 
 function poll() {
-    setInterval(fetchMessages, 1000);
+    pollInterval = setInterval(fetchMessages, 1000);
 }
 
 function fetchMessages() {
@@ -95,3 +113,19 @@ function fetchMessages() {
     };
     xhr.send();
 }
+
+function logout() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("DELETE", "/api/login", true);
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            createLoginInterface();
+            username = null;
+            last_message_timestamp = 0;
+            clearInterval(pollInterval)
+        }
+    };
+    xhr.send();
+}
+

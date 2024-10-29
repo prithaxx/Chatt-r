@@ -81,6 +81,13 @@ def handle_api(conn, request):
         else:
             conn.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
 
+    elif request.startswith('DELETE /api/login'):
+        response = connect_server('quit')
+        if response:
+            conn.send(response.encode())
+        else:
+            conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+
     else:
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
