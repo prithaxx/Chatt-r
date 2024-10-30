@@ -104,7 +104,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
                                     elif message == 'quit':
                                         client.sendall(b'HTTP/1.1 200 OK\r\n'
-                                                       b'Set-Cookie: session=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; '
+                                                       b'Set-Cookie: session_id=; path=/; '
+                                                       b'Expires=Thu, 01 Jan 1970 00:00:00 GMT; '
                                                        b'HttpOnly\r\n'
                                                        b'\r\n')
                                         web_clients.remove(client)

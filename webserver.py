@@ -48,12 +48,17 @@ def handle_api(conn, request):
             if username:
                 session_id = username
                 sessions[session_id] = conn
-                headers = 'HTTP/1.1 200 OK\r\nSet-Cookie: session_id={}; HttpOnly\r\n\r\n'.format(session_id)
+                headers = (
+                    'HTTP/1.1 200 OK\r\n'
+                    'Set-Cookie: session_id={}; Path=/; Expires=Tue, 19 Jan 2038 03:14:07 GMT; HttpOnly\r\n'
+                    '\r\n'.format(session_id)
+                )
                 conn.send(headers.encode())
             else:
                 conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
         except json.JSONDecodeError:
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+
 
     elif request.startswith('POST /api/messages'):
         headers, body = request.split('\r\n\r\n', 1)
@@ -71,6 +76,7 @@ def handle_api(conn, request):
                 conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
         except json.JSONDecodeError:
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+
 
     elif request.startswith('GET /api/messages'):
         # ?

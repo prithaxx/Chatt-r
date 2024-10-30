@@ -2,6 +2,11 @@ var username;
 var last_message_timestamp = 0;
 var pollInterval;
 
+// window.onload = function() {
+//     if (document.cookie.includes("session_id=")) {
+//         setupChatInterface();
+//     }
+// };
 function login(){
     username = document.getElementById("username").value;
     if (!username)
