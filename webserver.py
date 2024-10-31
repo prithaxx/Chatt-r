@@ -1,7 +1,6 @@
 import socket
 import threading
 import json
-import re
 
 HOST = ''
 PORT = 8211
@@ -22,20 +21,69 @@ def connect_server(message):
 
 def serve_static_file(conn, request):
     headers = "HTTP/1.1 200 OK\r\n"
+    file_path = None
+
     if request.startswith("GET / "):
         file_path = "./static/index.html"
     elif request.startswith("GET /static/script.js "):
         file_path = "./static/script.js"
         headers += "Content-Type: application/javascript\r\n"
+
+    elif request.startswith("GET /images.html "):
+        file_path = "files/images.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /images/f.jpeg "):
+        file_path = "files/images/f.jpeg"
+        headers += "Content-Type: image/jpeg\r\n"
+    elif request.startswith("GET /images/binary.jpeg"):
+        file_path = "files/images/binary.jpeg"
+        headers += "Content-Type: image/jpeg\r\n"
+    elif request.startswith("GET /images/code.jpeg"):
+        file_path = "files/images/code.jpeg"
+        headers += "Content-Type: image/jpeg\r\n"
+    elif request.startswith("GET /images/mitch.png"):
+        file_path = "files/images/mitch.png"
+        headers += "Content-Type: image/png\r\n"
+
+    elif request.startswith("GET /link.html "):
+        file_path = "files/link.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /folder/turtle.html "):
+        file_path = "files/folder/turtle.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /folder/folder/turtle.html "):
+        file_path = "files/folder/folder/turtle.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /folder/folder/folder/turtle.html "):
+        file_path = "files/folder/folder/folder/turtle.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /folder/folder/folder/folder/turtle.html "):
+        file_path = "files/folder/folder/folder/folder/turtle.html"
+        headers += "Content-Type: text/html\r\n"
+    elif request.startswith("GET /folder/folder/folder/folder/folder/turtle.html "):
+        file_path = "files/folder/folder/folder/folder/folder/turtle.html"
+        headers += "Content-Type: text/html\r\n"
+
+    elif request.startswith("GET /test.html "):
+        file_path = "files/test.html"
+        headers += "Content-Type: text/html\r\n"
     else:
         headers = "HTTP/1.1 404 Not Found\r\n"
         response = headers + "\r\nFile not found"
         conn.send(response.encode())
         conn.close()
         return
-    with open(file_path, "r") as f:
-        response = headers + "\r\n" + f.read()
-    conn.send(response.encode())
+
+    try:
+        with open(file_path, "rb") as f:
+            response = headers + "\r\n"
+            conn.send(response.encode())
+            conn.sendfile(f)
+    except FileNotFoundError:
+        headers = "HTTP/1.1 404 Not Found\r\n"
+        response = headers + "\r\nFile not found"
+        conn.send(response.encode())
+
     conn.close()
 
 
