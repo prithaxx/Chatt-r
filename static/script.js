@@ -2,11 +2,11 @@ var username;
 var last_message_timestamp = 0;
 var pollInterval;
 
-// window.onload = function() {
-//     if (document.cookie.includes("session_id=")) {
-//         setupChatInterface();
-//     }
-// };
+
+window.onload = function() {
+    checkLoginStatus();
+};
+
 function login(){
     username = document.getElementById("username").value;
     if (!username)
@@ -86,6 +86,9 @@ function sendMessage() {
 
                 document.getElementById('message').value = '';
             }
+            else if (xhr.status === 401){
+                logout();
+            }
         };
         xhr.send(JSON.stringify({ user: username, message: message }));
     }
@@ -115,6 +118,9 @@ function fetchMessages() {
                 last_message_timestamp = msg.timestamp;
             });
         }
+        else if (xhr.status === 401){
+            logout();
+        }
     };
     xhr.send();
 }
@@ -130,6 +136,23 @@ function logout() {
             last_message_timestamp = 0;
             clearInterval(pollInterval)
         }
+        else if (xhr.status === 401){
+            clearInterval(pollInterval);
+            createLoginInterface();
+        }
+    };
+    xhr.send();
+}
+
+function checkLoginStatus() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/api/login", true);
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200)
+            setupChatInterface();
+        else if (xhr.status === 401)
+            login();
     };
     xhr.send();
 }
