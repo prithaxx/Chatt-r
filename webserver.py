@@ -1,12 +1,12 @@
 import socket
 import threading
 import json
+import re
 
 HOST = ''
 PORT = 8211
 SERVER_HOST = ''
 SERVER_PORT = 8212
-
 
 def connect_server(message):
     try:

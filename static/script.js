@@ -5,6 +5,12 @@ var pollInterval;
 
 window.onload = function() {
     checkLoginStatus();
+    // Listen for changes in localStorage to update messages across tabs
+    window.addEventListener("storage", function(event) {
+        if (event.key === "newMessage" && event.newValue) {
+            fetchMessages();  // Fetch messages if any tab sends a new message
+        }
+    });
 };
 
 function login(){
@@ -17,8 +23,10 @@ function login(){
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.withCredentials = true;
         xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200)
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                localStorage.setItem("username", username);
                 setupChatInterface();
+            }
         }
         xhr.send(JSON.stringify({ user: username }));
     }
@@ -85,6 +93,7 @@ function sendMessage() {
                 messagesDiv.appendChild(messageElement);
 
                 document.getElementById('message').value = '';
+                localStorage.setItem("newMessage", new Date().getTime());
             }
             else if (xhr.status === 401)
                 logout();
@@ -116,6 +125,10 @@ function fetchMessages() {
                 messagesDiv.innerHTML += msg.user + ': ' + msg.message + '<br>';
                 last_message_timestamp = msg.timestamp;
             });
+            if (messages.length > 0) {
+                last_message_timestamp = messages[messages.length - 1].timestamp;
+                localStorage.setItem('last_message_timestamp', last_message_timestamp); // Sync timestamp across tabs
+            }
         }
         else if (xhr.status === 401)
             logout();
@@ -133,6 +146,8 @@ function logout() {
             createLoginInterface();
             username = null;
             last_message_timestamp = 0;
+            localStorage.removeItem("username");
+            localStorage.removeItem("last_message_timestamp");
             clearInterval(pollInterval)
         }
     };
@@ -140,15 +155,20 @@ function logout() {
 }
 
 function checkLoginStatus() {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "/api/login", true);
-    xhr.withCredentials = true;
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200)
-            setupChatInterface();
-        else if (xhr.status === 401)
-            login();
-    };
+    var storedUsername = localStorage.getItem('username');
+    if (storedUsername){
+        username = storedUsername;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/api/login", true);
+        xhr.withCredentials = true;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                setupChatInterface();
+            }
+            else if (xhr.status === 401)
+                createLoginInterface();
+        };
+    }
     xhr.send();
 }
 

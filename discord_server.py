@@ -10,7 +10,7 @@ HOST = ''
 PORT = 8210
 WEB_SERVER_PORT = 8212
 CHAT_HISTORY = 'chat_history.json'
-MAX_HISTORY = 50
+MAX_HISTORY = 100
 
 server_clients = []
 web_clients = []
