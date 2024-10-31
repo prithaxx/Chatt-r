@@ -86,9 +86,8 @@ function sendMessage() {
 
                 document.getElementById('message').value = '';
             }
-            else if (xhr.status === 401){
+            else if (xhr.status === 401)
                 logout();
-            }
         };
         xhr.send(JSON.stringify({ user: username, message: message }));
     }
@@ -100,45 +99,41 @@ function poll() {
 
 function fetchMessages() {
     var xhr = new XMLHttpRequest();
-    // if(last_message_timestamp!==0){
-    //     varurl="/api/messages?timestamp="+last_message_timestamp;
-    //     xhr.open("GET",url,true);
-    // } else{
-    //     xhr.open("GET","/api/messages",true);
-    // }
-    xhr.open("GET", "/api/messages", true);
-    xhr.withCredentials = true;  // Ensures cookies are sent with request
+    var url;
+    if (last_message_timestamp !== 0)
+        url = "/api/messages?timestamp=" + last_message_timestamp;
+    else
+        url = "/api/messages";
+
+    xhr.open("GET", url, true);
+    xhr.withCredentials = true;
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             var messages = JSON.parse(xhr.responseText);
-            console.log(JSON.stringify(messages));
             var messagesDiv = document.getElementById('messages');
+
             messages.forEach(function (msg) {
                 messagesDiv.innerHTML += msg.user + ': ' + msg.message + '<br>';
                 last_message_timestamp = msg.timestamp;
             });
         }
-        else if (xhr.status === 401){
+        else if (xhr.status === 401)
             logout();
-        }
     };
     xhr.send();
 }
+
 
 function logout() {
     var xhr = new XMLHttpRequest();
     xhr.open("DELETE", "/api/login", true);
     xhr.withCredentials = true;
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+        if ((xhr.readyState === 4 && xhr.status === 200) || xhr.status === 401) {
             createLoginInterface();
             username = null;
             last_message_timestamp = 0;
             clearInterval(pollInterval)
-        }
-        else if (xhr.status === 401){
-            clearInterval(pollInterval);
-            createLoginInterface();
         }
     };
     xhr.send();

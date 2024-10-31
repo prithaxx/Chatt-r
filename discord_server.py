@@ -16,7 +16,7 @@ server_clients = []
 web_clients = []
 usernames = {}
 chat_history = []
-
+last = 0
 
 def load_chat_history():
     if os.path.exists(CHAT_HISTORY):
@@ -47,6 +47,17 @@ def broadcast_message(client_list, message):
             client_list.remove(c)
             c.close()
 
+def get_messages(timestamp):
+    try:
+        timestamp = int(timestamp)
+        chats = []
+        for chat in chat_history:
+            if chat['timestamp'] > timestamp:
+                chats.append(chat)
+        return chats
+    except ValueError:
+        return []
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -74,7 +85,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
                     elif client is web_socket:
                         conn, addr = web_socket.accept()
-                        print('Web server connected by', addr)
                         web_clients.append(conn)
 
                     else:
@@ -85,10 +95,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
 
                                 # Handle messages from web clients
                                 if client in web_clients:
-                                    if ':' in message:
-                                        parts = message.split(':', 1)
-                                        user = parts[0].strip()
-                                        user_message = parts[1].strip()
+                                    if message.startswith('post_message'):
+                                        parts = message.split(':')
+                                        user = parts[1].strip()
+                                        user_message = parts[2].strip()
 
                                         timestamp = str(time.time())
                                         formatted_message = f'({timestamp}) {user}: {user_message}'
@@ -101,6 +111,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                     elif message == 'get_history':
                                         chat_history = load_chat_history()
                                         client.sendall(json.dumps(chat_history).encode())
+
+                                    elif message.startswith('get_message'):
+                                        parts = message.split(':', 1)
+                                        timestamp = parts[1].strip()
+                                        chats = get_messages(timestamp)
+                                        client.sendall(json.dumps(chats).encode())
 
                                     elif message == 'quit':
                                         client.sendall(b'HTTP/1.1 200 OK\r\n'
@@ -144,13 +160,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                         client.close()
 
                             else:
-                                # Handle disconnections
                                 if client in usernames:
                                     print(usernames[client], 'has disconnected.\n')
                                     del usernames[client]
                                     server_clients.remove(client)
                                 elif client in web_clients:
-                                    print('A web client has disconnected.\n')
                                     web_clients.remove(client)
                                 client.close()
 

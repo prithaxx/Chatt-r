@@ -4,10 +4,9 @@ import json
 
 HOST = ''
 PORT = 8211
-SERVER_HOST = ''  # Set this to the actual server host
+SERVER_HOST = ''
 SERVER_PORT = 8212
-sessions = {}  # Store client sessions
-session_id=''
+
 
 def connect_server(message):
     try:
@@ -59,13 +58,11 @@ def handle_api(conn, request):
         except json.JSONDecodeError:
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
-
     if request.startswith('GET /api/login'):
         if 'Cookie: session_id=' in request:
             conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
         else:
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
-
 
     elif request.startswith('POST /api/messages'):
         if 'Cookie: session_id=' in request:
@@ -75,7 +72,7 @@ def handle_api(conn, request):
                 user = data.get('user')
                 message = data.get('message')
                 if user and message:
-                    response = connect_server(f'{user}:{message}')
+                    response = connect_server(f'post_message:{user}:{message}')
                     if response:
                         conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
                     else:
@@ -87,9 +84,7 @@ def handle_api(conn, request):
         else:
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
-
-    elif request.startswith('GET /api/messages'):
-        # ?
+    elif request.startswith('GET /api/messages ') and 'timestamp=' not in request:
         if 'Cookie: session_id=' in request:
             response = connect_server('get_history')
             if response:
@@ -100,6 +95,17 @@ def handle_api(conn, request):
         else:
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
+    elif request.startswith('GET /api/messages?timestamp='):
+        if 'Cookie: session_id=' in request:
+            timestamp = request.split('timestamp=')[1]
+            response = connect_server('get_message:' + timestamp)
+            if response:
+                headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
+                conn.send(headers.encode() + response.encode())
+            else:
+                conn.send(b'HTTP/1.1 500 Internal Server Error\r\n\r\n')
+        else:
+            conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('DELETE /api/login'):
         if 'Cookie: session_id=' in request:
@@ -115,7 +121,6 @@ def handle_api(conn, request):
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
 
-# Function to handle incoming client requests in new threads
 def handle_client(conn):
     request = conn.recv(1024).decode()
     if request.startswith('GET /api') or request.startswith('POST /api') or request.startswith('DELETE /api'):
@@ -125,7 +130,6 @@ def handle_client(conn):
     conn.close()
 
 
-# Main server loop
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind((HOST, PORT))
