@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import os
 
 HOST = ''
 PORT = 8211
@@ -23,57 +24,45 @@ def serve_static_file(conn, request):
     headers = "HTTP/1.1 200 OK\r\n"
     file_path = None
 
+    # Handle the root request and the script
     if request.startswith("GET / "):
         file_path = "./static/index.html"
+        headers += "Content-Type: text/html\r\n"
     elif request.startswith("GET /static/script.js "):
         file_path = "./static/script.js"
         headers += "Content-Type: application/javascript\r\n"
 
-    elif request.startswith("GET /images.html "):
-        file_path = "files/images.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /images/f.jpeg "):
-        file_path = "files/images/f.jpeg"
-        headers += "Content-Type: image/jpeg\r\n"
-    elif request.startswith("GET /images/binary.jpeg"):
-        file_path = "files/images/binary.jpeg"
-        headers += "Content-Type: image/jpeg\r\n"
-    elif request.startswith("GET /images/code.jpeg"):
-        file_path = "files/images/code.jpeg"
-        headers += "Content-Type: image/jpeg\r\n"
-    elif request.startswith("GET /images/mitch.png"):
-        file_path = "files/images/mitch.png"
-        headers += "Content-Type: image/png\r\n"
+    # Handle unknown file paths for HTML, JPEG, and PNG
+    elif request.startswith("GET /"):
+        # Extract the requested path
+        requested_path = request.split(" ")[1].lstrip('/')
+        # Construct the full path (assuming files are in the "files" directory)
+        file_path = os.path.join("files", requested_path)
 
-    elif request.startswith("GET /link.html "):
-        file_path = "files/link.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /folder/turtle.html "):
-        file_path = "files/folder/turtle.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /folder/folder/turtle.html "):
-        file_path = "files/folder/folder/turtle.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /folder/folder/folder/turtle.html "):
-        file_path = "files/folder/folder/folder/turtle.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /folder/folder/folder/folder/turtle.html "):
-        file_path = "files/folder/folder/folder/folder/turtle.html"
-        headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /folder/folder/folder/folder/folder/turtle.html "):
-        file_path = "files/folder/folder/folder/folder/folder/turtle.html"
-        headers += "Content-Type: text/html\r\n"
+        # Determine the content type based on file extension
+        if file_path.endswith(".html"):
+            headers += "Content-Type: text/html\r\n"
+        elif file_path.endswith((".jpeg", ".jpg")):
+            headers += "Content-Type: image/jpeg\r\n"
+        elif file_path.endswith(".png"):
+            headers += "Content-Type: image/png\r\n"
+        else:
+            # For unsupported file types, return a 415 Unsupported Media Type
+            headers = "HTTP/1.1 415 Unsupported Media Type\r\n"
+            response = headers + "\r\nUnsupported file type"
+            conn.send(response.encode())
+            conn.close()
+            return
 
-    elif request.startswith("GET /test.html "):
-        file_path = "files/test.html"
-        headers += "Content-Type: text/html\r\n"
-    else:
+    # If no valid path was set, return 404
+    if file_path is None:
         headers = "HTTP/1.1 404 Not Found\r\n"
         response = headers + "\r\nFile not found"
         conn.send(response.encode())
         conn.close()
         return
 
+    # Try to open the requested file and send it back
     try:
         with open(file_path, "rb") as f:
             response = headers + "\r\n"
