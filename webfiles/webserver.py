@@ -24,22 +24,17 @@ def serve_static_file(conn, request):
     headers = "HTTP/1.1 200 OK\r\n"
     file_path = None
 
-    # Handle the root request and the script
     if request.startswith("GET / "):
-        file_path = "./static/index.html"
+        file_path = "index.html"
         headers += "Content-Type: text/html\r\n"
-    elif request.startswith("GET /static/script.js "):
-        file_path = "./static/script.js"
+    elif request.startswith("GET /webfiles/script.js "):
+        file_path = "script.js"
         headers += "Content-Type: application/javascript\r\n"
 
-    # Handle unknown file paths for HTML, JPEG, and PNG
     elif request.startswith("GET /"):
-        # Extract the requested path
         requested_path = request.split(" ")[1].lstrip('/')
-        # Construct the full path (assuming files are in the "files" directory)
-        file_path = os.path.join("files", requested_path)
+        file_path = os.path.join("../files", requested_path)
 
-        # Determine the content type based on file extension
         if file_path.endswith(".html"):
             headers += "Content-Type: text/html\r\n"
         elif file_path.endswith((".jpeg", ".jpg")):
@@ -47,14 +42,12 @@ def serve_static_file(conn, request):
         elif file_path.endswith(".png"):
             headers += "Content-Type: image/png\r\n"
         else:
-            # For unsupported file types, return a 415 Unsupported Media Type
             headers = "HTTP/1.1 415 Unsupported Media Type\r\n"
             response = headers + "\r\nUnsupported file type"
             conn.send(response.encode())
             conn.close()
             return
 
-    # If no valid path was set, return 404
     if file_path is None:
         headers = "HTTP/1.1 404 Not Found\r\n"
         response = headers + "\r\nFile not found"
@@ -62,7 +55,6 @@ def serve_static_file(conn, request):
         conn.close()
         return
 
-    # Try to open the requested file and send it back
     try:
         with open(file_path, "rb") as f:
             response = headers + "\r\n"

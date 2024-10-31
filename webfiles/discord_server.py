@@ -10,13 +10,12 @@ HOST = ''
 PORT = 8210
 WEB_SERVER_PORT = 8212
 CHAT_HISTORY = 'chat_history.json'
-MAX_HISTORY = 100
+MAX_HISTORY = 5
 
 server_clients = []
 web_clients = []
 usernames = {}
 chat_history = []
-last = 0
 
 def load_chat_history():
     if os.path.exists(CHAT_HISTORY):

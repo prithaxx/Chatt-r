@@ -1,5 +1,5 @@
 
 *.iml
 *.xml
-chat_history.json
+webfiles/chat_history.json
 .DS_Store
