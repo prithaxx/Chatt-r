@@ -86,11 +86,8 @@ function sendMessage() {
 
                 document.getElementById('message').value = '';
                 last_message_timestamp = Date.now()/1000;
-                localStorage.setItem("newMessage", last_message_timestamp.toString());
-            }
-            else if (xhr.status === 401) {
+            } else if (xhr.status === 401)
                 logout();
-            }
         };
         xhr.send(JSON.stringify({ user: username, message: message }));
     }
@@ -104,30 +101,26 @@ function fetchMessages() {
     var xhr = new XMLHttpRequest();
     var url;
 
-    if (last_message_timestamp !== 0) {
+    if (last_message_timestamp !== 0)
         url = "/api/messages?timestamp=" + last_message_timestamp;
-        console.log("Fetching messages after timestamp:", last_message_timestamp);
-    } else {
+    else
         url = "/api/messages";
-    }
 
     xhr.open("GET", url, true);
     xhr.withCredentials = true;
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
+            console.log(xhr.responseText);
             var messages = JSON.parse(xhr.responseText);
             var messagesDiv = document.getElementById('messages');
-
-            // Append each new message to the messages div
             messages.forEach(function (msg) {
                 var messageElement = document.createElement('div');
                 messageElement.textContent = msg.user + ': ' + msg.message;
                 messagesDiv.appendChild(messageElement);
             });
             last_message_timestamp = messages[messages.length-1].timestamp;
-        } else if (xhr.status === 401) {
+        } else if (xhr.status === 401)
             logout();
-        }
     };
     xhr.send();
 }
@@ -139,9 +132,9 @@ function logout() {
     xhr.onreadystatechange = function () {
         if ((xhr.readyState === 4 && xhr.status === 200) || xhr.status === 401) {
             createLoginInterface();
+            clearInterval(pollInterval);
             username = null;
             last_message_timestamp = 0;
-            clearInterval(pollInterval);
         }
     };
     xhr.send();
@@ -153,10 +146,10 @@ function checkLoginStatus() {
     xhr.withCredentials = true;
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
+            username = JSON.parse(xhr.responseText).user;
             setupChatInterface();
-        } else if (xhr.status === 401) {
+        } else if (xhr.status === 401)
             createLoginInterface();
-        }
     };
     xhr.send();
 }

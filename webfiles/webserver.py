@@ -89,7 +89,13 @@ def handle_api(conn, request):
 
     if request.startswith('GET /api/login'):
         if 'Cookie: session_id=' in request:
-            conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
+            session_id = request.split("Cookie: session_id=")[1].split()[0]
+            body = json.dumps({'user':session_id})
+            headers = (
+                    'HTTP/1.1 200 OK\r\n'
+                    'Set-Cookie: session_id={}; Path=/; Expires=Tue, 19 Jan 2038 03:14:07 GMT; HttpOnly\r\n\r\n'.format(session_id)
+            )
+            conn.send(headers.encode() + body.encode())
         else:
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
@@ -98,8 +104,8 @@ def handle_api(conn, request):
             headers, body = request.split('\r\n\r\n', 1)
             try:
                 data = json.loads(body)
-                user = data.get('user')
                 message = data.get('message')
+                user = headers.split("Cookie: session_id=")[1].split()[0]
                 if user and message:
                     response = connect_server(f'post_message:{user}:{message}')
                     if response:
