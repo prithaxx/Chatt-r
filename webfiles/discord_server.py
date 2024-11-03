@@ -48,10 +48,10 @@ def broadcast_message(client_list, message):
 
 def get_messages(timestamp):
     try:
-        timestamp = int(timestamp)
+        timestamp = float(timestamp)
         chats = []
         for chat in chat_history:
-            if chat['timestamp'] > timestamp:
+            if float(chat['timestamp']) > timestamp:
                 chats.append(chat)
         return chats
     except ValueError:

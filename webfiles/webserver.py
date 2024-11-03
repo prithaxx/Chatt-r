@@ -126,7 +126,7 @@ def handle_api(conn, request):
 
     elif request.startswith('GET /api/messages?timestamp='):
         if 'Cookie: session_id=' in request:
-            timestamp = request.split('timestamp=')[1]
+            timestamp = request.split("timestamp=")[1].split()[0]
             response = connect_server('get_message:' + timestamp)
             if response:
                 headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'

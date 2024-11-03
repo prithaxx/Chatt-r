@@ -2,32 +2,24 @@ var username;
 var last_message_timestamp = 0;
 var pollInterval;
 
-
 window.onload = function() {
     checkLoginStatus();
-    // Listen for changes in localStorage to update messages across tabs
-    window.addEventListener("storage", function(event) {
-        if (event.key === "newMessage" && event.newValue) {
-            fetchMessages();  // Fetch messages if any tab sends a new message
-        }
-    });
 };
 
 function login(){
     username = document.getElementById("username").value;
-    if (!username)
-        alert("Username is required to login")
-    else{
+    if (!username) {
+        alert("Username is required to login");
+    } else {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/login", true);
         xhr.setRequestHeader("Content-Type", "application/json");
         xhr.withCredentials = true;
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                localStorage.setItem("username", username);
                 setupChatInterface();
             }
-        }
+        };
         xhr.send(JSON.stringify({ user: username }));
     }
 }
@@ -47,7 +39,7 @@ function setupChatInterface() {
     sendBtn.onclick = sendMessage;
     chatDiv.appendChild(sendBtn);
 
-    var logoutBtn = document.createElement('button')
+    var logoutBtn = document.createElement('button');
     logoutBtn.textContent = 'Logout';
     logoutBtn.onclick = logout;
     chatDiv.appendChild(logoutBtn);
@@ -60,7 +52,7 @@ function setupChatInterface() {
 }
 
 function createLoginInterface(){
-     var chatDiv = document.getElementById('chat');
+    var chatDiv = document.getElementById('chat');
     chatDiv.innerHTML = '';
 
     var usernameInput = document.createElement('input');
@@ -77,9 +69,9 @@ function createLoginInterface(){
 
 function sendMessage() {
     var message = document.getElementById('message').value;
-    if (!message)
+    if (!message) {
         alert("Message cannot be empty.");
-    else {
+    } else {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/messages", true);
         xhr.setRequestHeader("Content-Type", "application/json");
@@ -93,10 +85,12 @@ function sendMessage() {
                 messagesDiv.appendChild(messageElement);
 
                 document.getElementById('message').value = '';
-                localStorage.setItem("newMessage", new Date().getTime());
+                last_message_timestamp = Date.now()/1000;
+                localStorage.setItem("newMessage", last_message_timestamp.toString());
             }
-            else if (xhr.status === 401)
+            else if (xhr.status === 401) {
                 logout();
+            }
         };
         xhr.send(JSON.stringify({ user: username, message: message }));
     }
@@ -109,10 +103,13 @@ function poll() {
 function fetchMessages() {
     var xhr = new XMLHttpRequest();
     var url;
-    if (last_message_timestamp !== 0)
+
+    if (last_message_timestamp !== 0) {
         url = "/api/messages?timestamp=" + last_message_timestamp;
-    else
+        console.log("Fetching messages after timestamp:", last_message_timestamp);
+    } else {
         url = "/api/messages";
+    }
 
     xhr.open("GET", url, true);
     xhr.withCredentials = true;
@@ -121,21 +118,19 @@ function fetchMessages() {
             var messages = JSON.parse(xhr.responseText);
             var messagesDiv = document.getElementById('messages');
 
+            // Append each new message to the messages div
             messages.forEach(function (msg) {
-                messagesDiv.innerHTML += msg.user + ': ' + msg.message + '<br>';
-                last_message_timestamp = msg.timestamp;
+                var messageElement = document.createElement('div');
+                messageElement.textContent = msg.user + ': ' + msg.message;
+                messagesDiv.appendChild(messageElement);
             });
-            if (messages.length > 0) {
-                last_message_timestamp = messages[messages.length - 1].timestamp;
-                localStorage.setItem('last_message_timestamp', last_message_timestamp); // Sync timestamp across tabs
-            }
-        }
-        else if (xhr.status === 401)
+            last_message_timestamp = messages[messages.length-1].timestamp;
+        } else if (xhr.status === 401) {
             logout();
+        }
     };
     xhr.send();
 }
-
 
 function logout() {
     var xhr = new XMLHttpRequest();
@@ -146,29 +141,22 @@ function logout() {
             createLoginInterface();
             username = null;
             last_message_timestamp = 0;
-            localStorage.removeItem("username");
-            localStorage.removeItem("last_message_timestamp");
-            clearInterval(pollInterval)
+            clearInterval(pollInterval);
         }
     };
     xhr.send();
 }
 
 function checkLoginStatus() {
-    var storedUsername = localStorage.getItem('username');
-    if (storedUsername){
-        username = storedUsername;
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/api/login", true);
-        xhr.withCredentials = true;
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                setupChatInterface();
-            }
-            else if (xhr.status === 401)
-                createLoginInterface();
-        };
-    }
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "/api/login", true);
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            setupChatInterface();
+        } else if (xhr.status === 401) {
+            createLoginInterface();
+        }
+    };
     xhr.send();
 }
-
