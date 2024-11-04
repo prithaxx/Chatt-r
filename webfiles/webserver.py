@@ -70,6 +70,7 @@ def serve_static_file(conn, request):
 
 def handle_api(conn, request):
     if request.startswith('POST /api/login'):
+        print('reached login')
         headers, body = request.split('\r\n\r\n', 1)
         try:
             data = json.loads(body)
@@ -100,6 +101,7 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('POST /api/messages'):
+        print("reached here")
         if 'Cookie: session_id=' in request:
             headers, body = request.split('\r\n\r\n', 1)
             try:
@@ -153,6 +155,7 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     else:
+        print("oops reached here instead")
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
 
