@@ -7,6 +7,7 @@ HOST = ''
 PORT = 8211
 SERVER_HOST = ''
 SERVER_PORT = 8212
+cookies = []
 
 def connect_server(message):
     try:
@@ -70,13 +71,13 @@ def serve_static_file(conn, request):
 
 def handle_api(conn, request):
     if request.startswith('POST /api/login'):
-        print('reached login')
         headers, body = request.split('\r\n\r\n', 1)
         try:
             data = json.loads(body)
             username = data.get('user')
             if username:
                 session_id = username
+                cookies.append(session_id)
                 headers = (
                     'HTTP/1.1 200 OK\r\n'
                     'Set-Cookie: session_id={}; Path=/; Expires=Tue, 19 Jan 2038 03:14:07 GMT; HttpOnly\r\n'
@@ -89,8 +90,8 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
     if request.startswith('GET /api/login'):
-        if 'Cookie: session_id=' in request:
-            session_id = request.split("Cookie: session_id=")[1].split()[0]
+        if 'session_id=' in request:
+            session_id = request.split("session_id=")[1].split()[0]
             body = json.dumps({'user':session_id})
             headers = (
                     'HTTP/1.1 200 OK\r\n'
@@ -101,13 +102,12 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('POST /api/messages'):
-        print("reached here")
-        if 'Cookie: session_id=' in request:
+        if 'session_id=' in request:
             headers, body = request.split('\r\n\r\n', 1)
             try:
                 data = json.loads(body)
                 message = data.get('message')
-                user = headers.split("Cookie: session_id=")[1].split()[0]
+                user = headers.split("session_id=")[1].split()[0]
                 if user and message:
                     response = connect_server(f'post_message:{user}:{message}')
                     if response:
@@ -122,7 +122,7 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('GET /api/messages ') and 'timestamp=' not in request:
-        if 'Cookie: session_id=' in request:
+        if 'session_id=' in request:
             response = connect_server('get_history')
             if response:
                 headers = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n'
@@ -133,7 +133,7 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('GET /api/messages?timestamp='):
-        if 'Cookie: session_id=' in request:
+        if 'session_id=' in request:
             timestamp = request.split("timestamp=")[1].split()[0]
             response = connect_server('get_message:' + timestamp)
             if response:
@@ -145,17 +145,27 @@ def handle_api(conn, request):
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
     elif request.startswith('DELETE /api/login'):
-        if 'Cookie: session_id=' in request:
+        if 'session_id=' in request:
+            session_id = request.split("session_id=")[1].split()[0]
             response = connect_server('quit')
             if response:
                 conn.send(response.encode())
+                cookies.remove(session_id)
             else:
                 conn.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
         else:
             conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n')
 
+    elif request.startswith('GET /api/status'):
+        if 'session_id=' in request:
+            session_id = request.split("session_id=")[1].split()[0]
+            if session_id in cookies:
+                headers = 'HTTP/1.1 200 OK\r\n\r\n'
+                conn.send(headers.encode() + session_id.encode())
+            else:
+                conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n') 
+
     else:
-        print("oops reached here instead")
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
 

@@ -1,23 +1,42 @@
 # README
 
-This assignment has been done entirely in Python. Please refer to this document to know how to execute the files and about the bugs and the fixes in the code.
+Part 1 of this Assignment has been completed in **Python** and **JavaScript**. Part 2 of the assignment has been completed with **C** and **Python**. Please refer to this document to know how to execute the files and about the bugs and the fixes in the code.
 
 ## Part 1: Execution
-The files that are needed for the execution for Part 1 are ```discord_server.py``` and ```discord_client.py```. 
+The files that are needed for the Part 1 are:
+- ```discord_server.py``` : runs the chat server
+- ```webserver.py``` : runs the web server
+- ```script.js``` : chubby client for assignment 2
+- ```discord_client.py``` : thin client from assignment 1
+- ```index.html``` : frontend
 
-To host the server run the following command in your terminal. 
+### To Host the Chat Server
+Run the following command in your terminal to host the chat server.
 ```
 python discord_server.py
 ```
-After you successfully host the server, the screen will show the port number in which you can connect to if you are using ```telnet``` or ``nc``. This is something it would look like-
+After you successfully hosted the server, the screen will show you that the server has successfully started:
 ```markdown
-[dasp4@heron A1]> python discord_server.py
-Server started, waiting for connections...
-Hosted on port: 9510
+[dasp4@hawk webfiles]> python discord_server.py
+Chat server started, waiting for connections...
 ```
-Please note that the port number is **randomly generated**. If the port is busy, you can simply **re-run the server code** as it will generate a new port number for you.
 
-### To Run the Client Code 
+### To Host the Webserver
+Run the following code in your terminal to host your webserver.
+```
+python webserver.py
+```
+After you successfully hosted the webserver, the screen will show you the port number where your client can connect to.
+```markdown
+[dasp4@hawk webfiles]> python webserver.py 
+Web server running on port 8211
+```
+
+### Client Connections
+To connect a client to the webserver, follow these steps:
+
+1. Open a **New Incognito Window** on **Google Chrome**.
+
 Clients can join the server in two ways. To run the client code please follow the structure of the following command.
 ```
 python discord_client.py <server_name>
@@ -32,13 +51,13 @@ Another way in which client can join the server is with ```telnet``` or ```nc```
 ```
 telnet <server_name> <port_number>
 ```
-The port number is show in the server window as specified above. If your server is running on ```crow.cs.umanitoba.ca``` and if your port is 5000 then run
+The port number is **8210**. If your server is running on ```crow.cs.umanitoba.ca``` then you will run:
 ```
-telnet crow.cs.umanitoba.ca 5000
+telnet crow.cs.umanitoba.ca 8210
 ```
 You can also use ```nc``` in a very similar way
 ```
-nc crow.cs.umanitoba.ca 5000
+nc crow.cs.umanitoba.ca 8210
 ```
 
 ### How to Disconnect Client from Server
@@ -143,9 +162,29 @@ To stop the server mnaually, you have to hit ```Ctrl+C``` from your keyboard.
 ---
 ## Part 2: Features & Observations
 A few modifications was made in ```test_server.py``` to meet the requirements of the assignment:
-- The chat history log is no longer persistent. Every time you restart the server, a blank ```chat_history_test.JSON``` file will be created. 
+- The chat history log has been limited to 50 messages. When the server is hosted, the first 50 messages gets written to ```chat_history_test.JSON```, after which he file is cleared and then filled again for incoming messages.
     -  This was implemented because within 5 minutes, a client is able to send thousdands of messages. Storing all these messages will drastically increase the size of the file and reduce the speed of the server. 
     - Every server hosting would be slower than the previous one which would give inaccurate and biased results in the analysis section of this assignment.
 
+- To make a completely non-blocking server, I implemented a message queue using writable. During a BlockingIO Exception, I append the failed messages in a message queue. All failed maessages are appeneded to this message queue so that they can be sent later.  
+    - The writable iterates through all the message queue for each client and relays the message to all clients. If the buffer gets full, the message is inserted in the queue again.
+```
+for client in writable:
+    if queue[client]:
+        next_message = queue[client].pop(0)
+        try:
+            bytes_sent = client.send(next_message.encode())
+            if bytes_sent < len(next_message):
+                queue[client].insert(0, next_message[bytes_sent:])
+            else:
+                message_sent += 1
+                add_message_to_history(usernames[client], next_message)
+        except BlockingIOError:
+            queue[client].insert(0, next_message)
+```
+
 ---
 ## Part 2: Bugs & Fixes
+The only inconsistent thing I have noticed in this part of the assignment is the fact that the number of messages varies from client to client. Sometimes I got more sent messages for 50 clients than 5 clients. Althouh the average messages sent is steadily decreasing; my guess behind why this happens would be network traffic.
+
+It is possible that when I ran my test for 5 clients, there were more people connected to that aviary bird than the time I tested for 50 clients. Since, the high volume of messages sent was completely random and not recurring, this is my best bet.

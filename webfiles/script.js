@@ -78,14 +78,8 @@ function sendMessage() {
         xhr.withCredentials = true;
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                var messagesDiv = document.getElementById('messages');
-                var newMessage = username + ": " + message;
-                var messageElement = document.createElement('div');
-                messageElement.textContent = newMessage;
-                messagesDiv.appendChild(messageElement);
-
-                document.getElementById('message').value = '';
-                last_message_timestamp = Date.now()/1000;
+                document.getElementById('message').value = ''; 
+                last_message_timestamp = Date.now() / 1000;
             } else if (xhr.status === 401)
                 logout();
         };
@@ -93,8 +87,9 @@ function sendMessage() {
     }
 }
 
+
 function poll() {
-    pollInterval = setInterval(fetchMessages, 1000);
+    pollInterval = setInterval(fetchMessages, 800);
 }
 
 function fetchMessages() {
@@ -110,7 +105,6 @@ function fetchMessages() {
     xhr.withCredentials = true;
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
-            console.log(xhr.responseText);
             var messages = JSON.parse(xhr.responseText);
             var messagesDiv = document.getElementById('messages');
             messages.forEach(function (msg) {
@@ -118,7 +112,8 @@ function fetchMessages() {
                 messageElement.textContent = msg.user + ': ' + msg.message;
                 messagesDiv.appendChild(messageElement);
             });
-            last_message_timestamp = messages[messages.length-1].timestamp;
+            if (messages.length > 0)
+                last_message_timestamp = messages[messages.length-1].timestamp;
         } else if (xhr.status === 401)
             logout();
     };
