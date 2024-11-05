@@ -2,13 +2,29 @@
 
 Part 1 of this Assignment has been completed in **Python** and **JavaScript**. Part 2 of the assignment has been completed with **C** and **Python**. Please refer to this document to know how to execute the files and about the bugs and the fixes in the code.
 
-## Part 1: Execution
+## Table of Contents
+- [Part 1: Execution](#part-1-execution) 
+    - [Hosting Chat Server](#to-host-the-chat-server)
+    - [Hosting Webserver](#to-host-the-webserver)
+    - [Web Client connections](#chubby-a2-client-connections)
+    - [Thin Client connections](#thin-a1-client-connections)
+    - [Run with telnet/nc](#to-run-with-telnet-or-netcat)
+    - [Disconnect Client](#how-to-disconnect-client-from-server)
+    - [Disconnect from Server](#how-to-stop-the-server-or-webserver)
+- [Part 1: Features](#part-1-features)
+- [Part 1: Bugs and Fixes](#part-1-bugs--fixes)
+- [Part 2: Execution](#part-2-execution)
+    - [How to use makefile](#how-to-use-makefile)
+    - [How to use scraper.c](#how-to-use-scraperc)
+- [Part 2: Features](#part-2-features)
+
+## Part 1: Execution 
 The files that are needed for the Part 1 are:
-- ```discord_server.py``` : runs the chat server
-- ```webserver.py``` : runs the web server
-- ```script.js``` : chubby client for assignment 2
-- ```discord_client.py``` : thin client from assignment 1
-- ```index.html``` : frontend
+- `discord_server.py` : runs the chat server
+- `webserver.py` : runs the web server
+- `script.js` : chubby client for assignment 2
+- `discord_client.py` : thin client from assignment 1
+- `index.html` : frontend
 
 ### To Host the Chat Server
 Run the following command in your terminal to host the chat server.
@@ -32,51 +48,67 @@ After you successfully hosted the webserver, the screen will show you the port n
 Web server running on port 8211
 ```
 
-### Client Connections
+### Chubby (A2) Client Connections
 To connect a client to the webserver, follow these steps:
 
 1. Open a **New Incognito Window** on **Google Chrome**.
+2. Write the following in your broswer window. The port number is **8211**
+``` markdown
+http://aviary.cs.umanitoba.ca:8211
+```
 
-Clients can join the server in two ways. To run the client code please follow the structure of the following command.
+### Thin (A1) Client Connections
+
+Thin clients can join the server in two ways. To run the client code please follow the structure of the following command.
 ```
 python discord_client.py <server_name>
 ```
-So for example, if your server is running on ```crow.cs.umanitoba.ca``` then run 
+So for example, if your server is running on `crow.cs.umanitoba.ca` then run 
 ```
 python discord_client.py crow.cs.umanitoba.ca
 ```
 
 ### To Run with Telnet or Netcat
-Another way in which client can join the server is with ```telnet``` or ```nc```. Log into your ```aviary.cs.umanitoba.ca``` account using ```SSH``` and then follow the structure of the command
+Another way in which client can join the server is with `telnet` or `nc`. Log into your `aviary.cs.umanitoba.ca` account using `SSH` and then follow the structure of the command
 ```
 telnet <server_name> <port_number>
 ```
-The port number is **8210**. If your server is running on ```crow.cs.umanitoba.ca``` then you will run:
+The port number is **8210**. If your server is running on `crow.cs.umanitoba.ca` then you will run:
 ```
 telnet crow.cs.umanitoba.ca 8210
 ```
-You can also use ```nc``` in a very similar way
+You can also use `nc` in a very similar way
 ```
 nc crow.cs.umanitoba.ca 8210
 ```
 
 ### How to Disconnect Client from Server
-There are two ways in you can disconnect client from server. You can either enter ```quit``` when you want to exit from the chat or you can hit ```Ctrl+C```.
+- **Web client:** To logout from the chat, you need to click on the `Logout` Button on the chat window. Closing the browser would not sign out the client as your saved cookies will identify you the next time you open a browser.
 
-### How to Stop the Server
-To stop the server you have to hit ```Ctrl+C``` from your keyboard.
+- **Thin client:** There are two ways in you can disconnect a thin client from the server. You can either enter `quit` when you want to exit from the chat or you can hit `Ctrl+C`.
+
+### How to Stop the Server or Webserver
+To stop the server or the webserver you have to hit `Ctrl+C` from your keyboard.
 
 ---
 ## Part 1: Features
-This chat program is persistent and will show upto 50 older messages when a client successfully logs in. The chat history is maintained in ```chat_history.JSON``` file which will be automatically created on your system when you start chatting for the first time. A sample file has been provided with this assignment to showcase the persistence.
+This chat server is persistent and will show upto 10 older messages when a client successfully logs in. The chat history is maintained in `chat_history.JSON` file which will be automatically created on your system when you start chatting for the first time. A sample file has been provided with this assignment to showcase the persistence.
 
-Upon connecting a client, the server will ask the client for a username. Until the client provides a valid username, they would not be able to receive any incoming messages or view any older messages from history. This is what this feature would look like:
+### Web Clients
+When you connect to `aviary.cs.umanitoba.ca` at port 8211 you will be prompted to enter a username. Before you enter your username, you **would not** be able to receive any prior or incoming messages. 
+
+To send a message you need to click on **Send** and to logout, click on **Logout**. If you close your browser without logging out, your cookies will be held and you will automatically be logged in once you open another browser window.
+
+
+### Thin Clients
+Upon connecting a client, the server will ask the client for a username. Until the client provides a valid username, they **would not** be able to receive any incoming messages or view any older messages from history. This is what this feature would look like:
 ```markdown
 [dasp4@heron A1]> python discord_client.py heron.cs.umanitoba.ca
 Welcome! Please provide your username to start chatting:
 You: 
 ```
-If you provide a valid username, you will be able to view all older messages.
+If you provide a valid username, you will be able to view all older messages. This was done with the thought of security and authentication in  mind, and also because it makes it look similar to the web client.
+
 ```markdown
 [dasp4@heron A1]> python discord_client.py heron.cs.umanitoba.ca
 Welcome! Please provide your username to start chatting:
@@ -89,7 +121,7 @@ You can start chatting now:
 (1728410323.6061094) frank: hru????ok
 You: 
 ```
-An example of an invalid username would be ```quit```, as the server would assume that the client wants to leave the chat and hence it would disconnect them.
+An example of an invalid username would be `quit`, as the server would assume that the client wants to leave the chat and hence it would disconnect them.
 ```markdown
 [dasp4@heron A1]> python discord_client.py heron.cs.umanitoba.ca
 Welcome! Please provide your username to start chatting:
@@ -113,78 +145,63 @@ Bob's message is successfully sent to the chat without any overlapping. However,
 This is because of this part of the code that I wrote in the client program which brings the cursor to the beginning of the current line and then clears the line. 
 
 ```markdown
-# Bring curson to the beginning of the current line and clear the line
+# Bring cursor to the beginning of the current line and clear the line
 sys.stdout.write('\r\033[K')
 print('\r' + data.decode().strip())
 ```
-I tried using the ```curses``` library to fix the overlapping UI but I wasn't able to go much further with that. I have however partially solved this issue so I hope I would be able to get some points for that.
+I tried using the `curses` library to fix the overlapping UI but I wasn't able to go much further with that. This issue has been there since assignment 1 for which my marks have been deducted already, so I am hoping there wouldn't be any deduction this time.
 
 ---
 ## Part 2: Execution
-The files that are needed for the execution of Part 2 are ```test_server.py```, ```test_client.py``` (optional) and ```load_test_demo.sh```. 
+The files needed for this part are the ones from Part 1 and the following:
+- `scraper.c`
+- `makefile`
 
-To host the server run the following command in your terminal.
-```
-python test_server.py
-```
-### To Run the Client Code 
-Clients can join the server in two ways. You can either manually run the client code using the following command structure:
-```
-python test_client.py <server_name>
-```
-So for example, if your server is running on ```crow.cs.umanitoba.ca``` then run 
-```
-python test_client.py crow.cs.umanitoba.ca
-```
-### To Connect Multiple Clients with Bash script
-Another way in which multiple clients can be created and connected at the same time is by using the ```load_test_demo.sh``` script. 
+Please host the `discord_server.py` and `webserver.py` before you run any client files. The steps to host these servers are linked [here](#part-1-execution).
 
-Before running the script, you might have to give speciall permission access to the script. Please run the following command in your terminal:
-```
-chmod +x load_test_demo.sh
-```
-Now you are ready to create clients. This is the structure to run the script
-```
-./load_test_demo.sh <server_name> <num_clients>
-```
-So for example, if your server is running on ```crow.cs.umanitoba.ca``` and you want to create 10 clients then run:
-```
-./load_test_demo.sh crow.cs.umanitoba.ca 10
-```
-### How to Stop the Server
-The server will automatically stop after 5 minutes. All clients will be disconnected when this happens. Once the server stops, it will print out statistics such as:
-- Total Number of Messages Sent
-- Total Number of Messages Received
-- Time Elapsed
+### How to use makefile
+You can use the `makefile` to run and compile the code in `scraper.c`. 
 
-To stop the server mnaually, you have to hit ```Ctrl+C``` from your keyboard.
+Please follow this structure:
+``` {markdown}
+make run <server_name> <port_number> <username> <message>
+```
+The port number has to be **8211**. The message needs to be typed within " ".
 
+Let's say you are on `crow.cs.umanitoba.ca` and you want to send the message "Hello, World!", then you would type the following:
+``` {markdown}
+make run crow.cs.umanitoba.ca 8211 Alice "Hello, World!"
+```
+
+### How to use scraper.c
+If you want to use`scraper.c` directly to run the code, you have to follow these steps:
+```
+gcc scraper.c -o scraper
+./scraper <server_name> <port_number> <username> <message>
+```
+The port number has to be **8211**. The message needs to be typed within " ".
+
+Let's say you are on `crow.cs.umanitoba.ca` and you want to send the message "Hello, World!", then you would type the following:
+``` {markdown}
+./scraper crow.cs.umanitoba.ca 8211 Alice "Hello, World!"
+```
 ---
-## Part 2: Features & Observations
-A few modifications was made in ```test_server.py``` to meet the requirements of the assignment:
-- The chat history log has been limited to 50 messages. When the server is hosted, the first 50 messages gets written to ```chat_history_test.JSON```, after which he file is cleared and then filled again for incoming messages.
-    -  This was implemented because within 5 minutes, a client is able to send thousdands of messages. Storing all these messages will drastically increase the size of the file and reduce the speed of the server. 
-    - Every server hosting would be slower than the previous one which would give inaccurate and biased results in the analysis section of this assignment.
 
-- To make a completely non-blocking server, I implemented a message queue using writable. During a BlockingIO Exception, I append the failed messages in a message queue. All failed maessages are appeneded to this message queue so that they can be sent later.  
-    - The writable iterates through all the message queue for each client and relays the message to all clients. If the buffer gets full, the message is inserted in the queue again.
+## Part 2 Features
+A new api request is added to the webserver that checks if the username sent by the scraper is already in the list of logged in users or not.
 ```
-for client in writable:
-    if queue[client]:
-        next_message = queue[client].pop(0)
-        try:
-            bytes_sent = client.send(next_message.encode())
-            if bytes_sent < len(next_message):
-                queue[client].insert(0, next_message[bytes_sent:])
-            else:
-                message_sent += 1
-                add_message_to_history(usernames[client], next_message)
-        except BlockingIOError:
-            queue[client].insert(0, next_message)
+elif request.startswith('GET /api/status'):
+    if 'session_id=' in request:
+        session_id = request.split("session_id=")[1].split()[0]
+        if session_id in cookies:
+            headers = 'HTTP/1.1 200 OK\r\n\r\n'
+            conn.send(headers.encode() + session_id.encode())
+        else:
+            conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n') 
 ```
+This chunk looks for the given username in the list of cookies. If it exists within the list, then further GET and POST requests are accepted by the server. If it does not exist then then webserver sends an `Error 401: Unauthorized`. 
 
----
-## Part 2: Bugs & Fixes
-The only inconsistent thing I have noticed in this part of the assignment is the fact that the number of messages varies from client to client. Sometimes I got more sent messages for 50 clients than 5 clients. Althouh the average messages sent is steadily decreasing; my guess behind why this happens would be network traffic.
-
-It is possible that when I ran my test for 5 clients, there were more people connected to that aviary bird than the time I tested for 50 clients. Since, the high volume of messages sent was completely random and not recurring, this is my best bet.
+The verification of the POST message is done with the help of a GET query. The assertion here checks if `response` has `chat_message` as a substring.
+```
+assert(strstr(response, chat_message) != NULL && "Error 404: Not Found");
+```
