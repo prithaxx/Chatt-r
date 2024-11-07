@@ -1,5 +1,3 @@
-# README
-
 Part 1 of this Assignment has been completed in **Python** and **JavaScript**. Part 2 of the assignment has been completed with **C** and **Python**. Please refer to this document to know how to execute the files and about the bugs and the fixes in the code.
 
 ## Table of Contents
