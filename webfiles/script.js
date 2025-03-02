@@ -190,8 +190,54 @@ function deleteMessage(message_id) {
                 messageElement.remove();
             }
         } else if (xhr.status === 400) {
-            alert("You can only delete your own message!");
+            showPopup("You can only delete your own message!");
         }
     };
     xhr.send();
 }
+
+function showPopup(message) {
+    // Check if the popup already exists to prevent creating multiple popups
+    if (document.getElementById('popup')) {
+        return; // If the popup already exists, don't create a new one
+    }
+
+    // Create the overlay to block interaction
+    var overlay = document.createElement('div');
+    overlay.id = 'overlay';
+    overlay.classList.add('overlay');
+    document.body.appendChild(overlay);
+
+    // Create the popup div
+    var popup = document.createElement('div');
+    popup.id = 'popup';
+    popup.classList.add('popup');
+    
+    // Create the popup message content
+    var popupMessage = document.createElement('span');
+    popupMessage.textContent = message;
+    popup.appendChild(popupMessage);
+
+    // Create the close button
+    var closeButton = document.createElement('button');
+    closeButton.textContent = 'OK';
+    
+    // Use a named function to remove the popup and overlay
+    closeButton.onclick = function() {
+        popup.remove();
+        overlay.remove();
+    };
+    popup.appendChild(closeButton);
+
+    // Append the popup to the body
+    document.body.appendChild(popup);
+
+    // Automatically close the popup after 3 seconds (optional)
+    setTimeout(function() {
+        popup.remove();
+        overlay.remove();
+    }, 3000);
+}
+
+
+
