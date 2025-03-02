@@ -90,6 +90,7 @@ function sendMessage() {
         xhr.withCredentials = true;
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
+                fetchMessages();
                 document.getElementById('message').value = ''; 
                 last_message_timestamp = Date.now() / 1000;
             } else if (xhr.status === 401)
