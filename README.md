@@ -1,6 +1,6 @@
 ## Table of Contents
 
-The files that are needed for the Part 1 are:
+The files that are needed:
 - `server.py` : runs the chat server
 - `webserver.py` : runs the web server
 - `script.js` : web client
