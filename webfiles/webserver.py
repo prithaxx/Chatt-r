@@ -37,6 +37,9 @@ def serve_static_file(conn, request):
     elif request.startswith("GET /webfiles/script.js "):
         file_path = "script.js"
         headers += "Content-Type: application/javascript\r\n"
+    elif request.startswith("GET /webfiles/styles.css "):
+        file_path = "styles.css"
+        headers += "Content-Type: text/css\r\n"
 
     elif request.startswith("GET /"):
         requested_path = request.split(" ")[1].lstrip('/')

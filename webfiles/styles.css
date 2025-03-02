@@ -1,0 +1,150 @@
+/* styles.css */
+
+/* Global Styles & Gradient Background */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  
+  /* Pink/Purple gradient background with animation */
+  background: linear-gradient(135deg, #fbc2eb, #a18cd1);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+
+  /* Center everything on the screen */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+@keyframes gradientBG {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Main heading at the top */
+h1 {
+  text-transform: uppercase;
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Chat/Login container */
+#chat {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+  padding: 20px;
+  text-align: center; /* Ensures elements inside #chat are centered */
+}
+
+/* Username input and login button on the login screen */
+#chat input#username,
+#chat button#loginbtn {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 10px 5px;
+}
+
+#chat input#username {
+  width: 60%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+/* General button styling */
+button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #ff6f61;
+  color: #fff;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #ff3b2e;
+}
+
+/* Chat messages area:
+ - Fixed height for a bigger, constant size.
+ - Overflow auto so you can scroll for older messages.
+ - Using flex-direction: column-reverse to keep new messages at the bottom. */
+#messages {
+  margin: 0 auto 20px auto;
+  height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 10px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Individual message styling */
+#messages div {
+  padding: 8px;
+  margin-bottom: 5px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+#messages div span {
+  flex: 1;
+}
+
+/* Delete button on messages */
+#messages div button {
+  background: #ff4d4d;
+  border: none;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 10px;
+}
+
+#messages div button:hover {
+  background: #e60000;
+}
+
+/* Input area for sending messages - placed below the message area */
+#message {
+  width: 60%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-right: 10px; /* Space between the input and the Send button */
+}
+
+#sendBtn {
+  margin-right: 10px; /* Space between Send and Logout buttons */
+}
+
+#inputArea {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Creates space between the input, Send, and Logout */
+  margin-top: 10px;
+}
+

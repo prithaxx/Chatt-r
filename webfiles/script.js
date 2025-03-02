@@ -29,28 +29,39 @@ function setupChatInterface() {
     var chatDiv = document.getElementById('chat');
     chatDiv.innerHTML = '';
 
-    var messageInput = document.createElement('input');
-    messageInput.type = 'text';
-    messageInput.id = 'message';
-    messageInput.placeholder = 'Enter your message';
-    chatDiv.appendChild(messageInput);
-
-    var sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Send';
-    sendBtn.onclick = sendMessage;
-    chatDiv.appendChild(sendBtn);
-
-    var logoutBtn = document.createElement('button');
-    logoutBtn.textContent = 'Logout';
-    logoutBtn.onclick = logout;
-    chatDiv.appendChild(logoutBtn);
-
+    // Create the messages container
     var messagesDiv = document.createElement('div');
     messagesDiv.id = 'messages';
     chatDiv.appendChild(messagesDiv);
 
+    // Create a container for the input field and buttons
+    var inputAreaDiv = document.createElement('div');
+    inputAreaDiv.id = 'inputArea';  // We'll rely on CSS for spacing/styling
+    chatDiv.appendChild(inputAreaDiv);
+
+    // Create the message input
+    var messageInput = document.createElement('input');
+    messageInput.type = 'text';
+    messageInput.id = 'message';
+    messageInput.placeholder = 'Enter your message';
+    inputAreaDiv.appendChild(messageInput);
+
+    // Create the Send button
+    var sendBtn = document.createElement('button');
+    sendBtn.textContent = 'Send';
+    sendBtn.onclick = sendMessage;
+    inputAreaDiv.appendChild(sendBtn);
+
+    // Create the Logout button
+    var logoutBtn = document.createElement('button');
+    logoutBtn.textContent = 'Logout';
+    logoutBtn.onclick = logout;
+    inputAreaDiv.appendChild(logoutBtn);
+
+    // Start polling for new messages
     poll();
 }
+
 
 function createLoginInterface(){
     var chatDiv = document.getElementById('chat');
