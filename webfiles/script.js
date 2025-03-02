@@ -116,6 +116,8 @@ function fetchMessages() {
         if (xhr.readyState === 4 && xhr.status === 200) {
             var messages = JSON.parse(xhr.responseText);
             var messagesDiv = document.getElementById('messages');
+            
+            // Prepend the new messages to the top of the message list
             messages.forEach(function (msg) {
                 var messageElement = document.createElement('div');
                 messageElement.id = `message-${msg.message_id}`;
@@ -131,8 +133,11 @@ function fetchMessages() {
                 };
                 messageElement.appendChild(button);
 
-                messagesDiv.appendChild(messageElement);
+                // Prepend instead of append to make new messages appear at the bottom
+                messagesDiv.insertBefore(messageElement, messagesDiv.firstChild);
             });
+            
+            // Update the timestamp to avoid re-fetching the same messages
             if (messages.length > 0) {
                 last_message_timestamp = messages[messages.length - 1].timestamp;
             }
@@ -142,6 +147,7 @@ function fetchMessages() {
     };
     xhr.send();
 }
+
 
 function logout() {
     var xhr = new XMLHttpRequest();
