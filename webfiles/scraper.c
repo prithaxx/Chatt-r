@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <netdb.h> 
 #include <assert.h>
+#include <time.h>
 
 void send_request(int socket_desc, const char *request, char *response){
     send(socket_desc, request, strlen(request), 0);
@@ -16,6 +17,9 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <host> <port> <username> <chat_message>\n", argv[0]);
         return -1;
     }
+
+    srand(time(NULL));
+    int message_id = rand();
 
     char *host = argv[1];
     int port = atoi(argv[2]);
@@ -59,7 +63,7 @@ int main(int argc, char *argv[]) {
              host, username);
     
     send_request(socket_desc, cookie_request, response);
-    assert(strstr(response, username) != NULL && "Cookie does not exist");
+    assert(strstr(response, username) != NULL && "Error 401: Unauthorized");
     printf("Cookie (%s) exists and verified successfully.\n", username);
 
     close(socket_desc);
@@ -68,14 +72,14 @@ int main(int argc, char *argv[]) {
 
     // POST chat message
     snprintf(post_request, sizeof(post_request),
-             "POST /api/messages HTTP/1.1\r\n"
-             "Host: %s\r\n"
-             "Content-Type: application/json\r\n"
-             "Content-Length: %ld\r\n"
-             "Cookie: session_id=%s\r\n\r\n"
-             "{\"message\":\"%s\"}",
-             host, strlen(chat_message)+20, username, chat_message);
-
+         "POST /api/messages HTTP/1.1\r\n"
+         "Host: %s\r\n"
+         "Content-Type: application/json\r\n"
+         "Content-Length: %ld\r\n"
+         "Cookie: session_id=%s\r\n\r\n"
+         "{\"message_id\":%d, \"message\":\"%s\"}",
+         host, strlen(chat_message) + 35 + snprintf(NULL, 0, "%d", message_id), username, message_id, chat_message);
+         
     send_request(socket_desc, post_request, response);
 
     close(socket_desc);
@@ -91,7 +95,7 @@ int main(int argc, char *argv[]) {
 
     send_request(socket_desc, get_request, response);
 
-    assert(strstr(response, chat_message) != NULL && "Message verification failed");
+    assert(strstr(response, chat_message) != NULL && "Error 404: Not Found");
     printf("Message (%s) sent and verified successfully.\n", chat_message);
 
     close(socket_desc);

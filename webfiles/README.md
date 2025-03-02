@@ -1,5 +1,10 @@
 # README
 
+## BONUS
+The bonus part of this assignment has been attempted and completed. There will be a button `X` next to all messages and if **your username matches the username of the message** then it will be deleted. 
+- If you are logged in from a terminal as well then the message **would still** show up as I cannot delete an already printed text from terminal.
+
+----
 Part 1 of this Assignment has been completed in **Python** and **JavaScript**. Part 2 of the assignment has been completed with **C** and **Python**. Please refer to this document to know how to execute the files and about the bugs and the fixes in the code.
 
 ## Table of Contents
@@ -12,6 +17,7 @@ Part 1 of this Assignment has been completed in **Python** and **JavaScript**. P
     - [Disconnect Client](#how-to-disconnect-client-from-server)
     - [Disconnect from Server](#how-to-stop-the-server-or-webserver)
 - [Part 1: Features](#part-1-features)
+    - [Hosting from Filesystem](#hosting-from-filesystem)
 - [Part 1: Bugs and Fixes](#part-1-bugs--fixes)
 - [Part 2: Execution](#part-2-execution)
     - [How to use makefile](#how-to-use-makefile)
@@ -40,11 +46,15 @@ Chat server started, waiting for connections...
 ### To Host the Webserver
 Run the following code in your terminal to host your webserver.
 ```
-python webserver.py
+python webserver.py <server_name>
+```
+So if your chat server is hosted on `crow.cs.umanitoba.ca` then you will write
+```
+python webserver.py crow.cs.umanitoba.ca
 ```
 After you successfully hosted the webserver, the screen will show you the port number where your client can connect to.
 ```markdown
-[dasp4@hawk webfiles]> python webserver.py 
+[dasp4@hawk webfiles]> python webserver.py crow.cs.umanitoba.ca
 Web server running on port 8211
 ```
 
@@ -128,6 +138,12 @@ Welcome! Please provide your username to start chatting:
 You: quit
 Disconnected from server
 ```
+
+### Hosting from Filesystems
+If you want to serve a file (of the type **.html, .jpeg** or **.png**) then you have to store them inside the folder called `files`. This folder has been created for the sole puprpose of serving static files.
+
+**Please do not store any static files outside `file` as then they would not be served by the webserver.**
+
 ---
 ## Part 1: Bugs & Fixes
 I was able to partially fix the message interlacing problem of the UI. To explain my progress let's assume there there are two clients- Alice and Bob. In the screenshot attached, the left is Alice's chat and the right is Bob's chat. In this image we can see that both of our clients are currently typing.

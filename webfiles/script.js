@@ -1,6 +1,7 @@
 var username;
 var last_message_timestamp = 0;
 var pollInterval;
+var message_id;
 
 window.onload = function() {
     checkLoginStatus();
@@ -83,7 +84,7 @@ function sendMessage() {
             } else if (xhr.status === 401)
                 logout();
         };
-        xhr.send(JSON.stringify({ user: username, message: message }));
+        xhr.send(JSON.stringify({ user: username, message: message, message_id: Math.floor(Math.random()*1000000)}));
     }
 }
 
@@ -94,12 +95,9 @@ function poll() {
 
 function fetchMessages() {
     var xhr = new XMLHttpRequest();
-    var url;
-
-    if (last_message_timestamp !== 0)
-        url = "/api/messages?timestamp=" + last_message_timestamp;
-    else
-        url = "/api/messages";
+    var url = last_message_timestamp !== 0
+        ? "/api/messages?timestamp=" + last_message_timestamp
+        : "/api/messages";
 
     xhr.open("GET", url, true);
     xhr.withCredentials = true;
@@ -109,13 +107,27 @@ function fetchMessages() {
             var messagesDiv = document.getElementById('messages');
             messages.forEach(function (msg) {
                 var messageElement = document.createElement('div');
-                messageElement.textContent = msg.user + ': ' + msg.message;
+                messageElement.id = `message-${msg.message_id}`;
+                
+                var messageText = document.createElement('span');
+                messageText.textContent = msg.user + ': ' + msg.message;
+                messageElement.appendChild(messageText);
+                
+                var button = document.createElement('button');
+                button.textContent = "X";
+                button.onclick = function() {
+                    deleteMessage(msg.message_id);
+                };
+                messageElement.appendChild(button);
+
                 messagesDiv.appendChild(messageElement);
             });
-            if (messages.length > 0)
-                last_message_timestamp = messages[messages.length-1].timestamp;
-        } else if (xhr.status === 401)
+            if (messages.length > 0) {
+                last_message_timestamp = messages[messages.length - 1].timestamp;
+            }
+        } else if (xhr.status === 401) {
             logout();
+        }
     };
     xhr.send();
 }
@@ -145,6 +157,23 @@ function checkLoginStatus() {
             setupChatInterface();
         } else if (xhr.status === 401)
             createLoginInterface();
+    };
+    xhr.send();
+}
+
+function deleteMessage(message_id) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("DELETE", "/api/messages/" + message_id, true);
+    xhr.withCredentials = true;
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var messageElement = document.getElementById(`message-${message_id}`);
+            if (messageElement) {
+                messageElement.remove();
+            }
+        } else if (xhr.status === 400) {
+            alert("You can only delete your own message!");
+        }
     };
     xhr.send();
 }

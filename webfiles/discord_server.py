@@ -5,6 +5,7 @@ import traceback
 import os
 import json
 import time
+import random
 
 HOST = ''
 PORT = 8210
@@ -29,12 +30,26 @@ def load_chat_history():
     return []
 
 
-def add_message_to_history(user, message):
+def add_message_to_history(user, message, message_id):
     timestamp = str(time.time())
-    chat_message = {'user': user, 'timestamp': timestamp, 'message': message}
+    chat_message = {'user': user, 'timestamp': timestamp, 'message': message, 'message_id': message_id}
     chat_history.append(chat_message)
     with open(CHAT_HISTORY, 'w') as f:
         json.dump(chat_history, f, indent=1)
+
+
+def delete_message_from_history(user, id):
+    chat_history = load_chat_history()
+    result = False
+    for chat in chat_history:
+        if chat.get('message_id') == id and chat.get('user') == user:
+            chat_history.remove(chat)
+            with open('chat_history.json', 'w') as f:
+                json.dump(chat_history, f, indent=1)
+            result = True
+            break
+
+    return result
 
 
 def broadcast_message(client_list, message):
@@ -80,7 +95,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                         conn, addr = server_socket.accept()
                         print('Terminal client connected by', addr)
                         server_clients.append(conn)
-                        conn.sendall(b'Welcome! Please provide your username to start chatting:\n')
+                        conn.sendall(b'Welcome! Please provide your username to receive older and incoming chats:\n')
 
                     elif client is web_socket:
                         conn, addr = web_socket.accept()
@@ -98,10 +113,11 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                         parts = message.split(':')
                                         user = parts[1].strip()
                                         user_message = parts[2].strip()
+                                        message_id = parts[3].strip()
 
                                         timestamp = str(time.time())
                                         formatted_message = f'({timestamp}) {user}: {user_message}'
-                                        add_message_to_history(user, user_message)
+                                        add_message_to_history(user, user_message, message_id)
 
                                         # Broadcast to all clients
                                         broadcast_message(server_clients, formatted_message)
@@ -116,6 +132,17 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                         timestamp = parts[1].strip()
                                         chats = get_messages(timestamp)
                                         client.sendall(json.dumps(chats).encode())
+                                    
+                                    # BONUS
+                                    elif message.startswith('delete_message'):
+                                        parts = message.split(':')
+                                        user = parts[1].strip()
+                                        message_id = parts[2].strip()
+                                        result = delete_message_from_history(user, message_id)
+                                        if result:
+                                            client.sendall(b'HTTP/1.1 200 OK\r\n\r\n')
+                                        else:
+                                            client.sendall(b'HTTP/1.1 400 Bad Request\r\n\r\n')
 
                                     elif message == 'quit':
                                         client.sendall(b'HTTP/1.1 200 OK\r\n'
@@ -130,6 +157,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                     # Handle messages from terminal clients
                                     if message.lower() != 'quit':
                                         timestamp = str(time.time())
+                                        message_id = str(random.randint(0, 999999))
 
                                         if client not in usernames:
                                             usernames[client] = message
@@ -145,7 +173,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
                                             user = usernames[client]
                                             formatted_message = f'({timestamp}) {user}: {message}'
                                             broadcast_message(server_clients, formatted_message + '\n')
-                                            add_message_to_history(user, message)
+                                            add_message_to_history(user, message, message_id)
 
                                     else:
                                         # Handle client quit

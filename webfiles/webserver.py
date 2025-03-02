@@ -2,10 +2,16 @@ import socket
 import threading
 import json
 import os
+import re
+import sys
+
+if len(sys.argv) != 2:
+    print("Usage: " + sys.argv[0] + " <server_host>")
+    sys.exit(1)
 
 HOST = ''
 PORT = 8211
-SERVER_HOST = ''
+SERVER_HOST = sys.argv[1]
 SERVER_PORT = 8212
 cookies = []
 
@@ -107,9 +113,10 @@ def handle_api(conn, request):
             try:
                 data = json.loads(body)
                 message = data.get('message')
+                message_id = data.get('message_id')
                 user = headers.split("session_id=")[1].split()[0]
                 if user and message:
-                    response = connect_server(f'post_message:{user}:{message}')
+                    response = connect_server(f'post_message:{user}:{message}:{message_id}')
                     if response:
                         conn.send(b'HTTP/1.1 200 OK\r\n\r\n')
                     else:
@@ -165,12 +172,22 @@ def handle_api(conn, request):
             else:
                 conn.send(b'HTTP/1.1 401 Unauthorized\r\n\r\n') 
 
+    # BONUS:
+    elif request.startswith('DELETE /api/messages'):
+        if 'session_id=' in request:
+            session_id = request.split("session_id=")[1].split()[0]
+            match = re.search(r"\s*/api/messages/([^/\s]+)\s*", request)
+            if match:
+                message_id = match.group(1)
+                response = connect_server(f'delete_message:{session_id}:{message_id}')
+                conn.send(response.encode())
+
     else:
         conn.send(b'HTTP/1.1 404 Not Found\r\n\r\n')
 
 
 def handle_client(conn):
-    request = conn.recv(1024).decode()
+    request = conn.recv(1024).decode('utf-8', errors='ignore')
     if request.startswith('GET /api') or request.startswith('POST /api') or request.startswith('DELETE /api'):
         handle_api(conn, request)
     else:
